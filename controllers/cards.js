@@ -30,7 +30,7 @@ const addCard = async (req, res = response) => {
                 if(errors[err].properties.type == "required"){
                     throw new Error(`El objeto ${err} es obligatorio`)
                 }else{
-                    throw new Error("error: " + err)
+                    throw new Error("error : " + err)
                 }
             }
         } else {
