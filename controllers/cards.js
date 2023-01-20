@@ -1,6 +1,8 @@
 const { response } = require('express');
 const { logError } = require('../middlewares/erros');
 const {validarJWTByUser } = require('../middlewares/validar-jwt');
+const {genRandonID} = require('../middlewares/utils')
+
 const Card = require('../models/Card');
 const Usuario = require('../models/Usuario');
 
@@ -16,14 +18,12 @@ const getCards = async (req, res = response) => {
 const addCard = async (req, res = response) => {
     const card = new Card(req.body)
 
-    const cardId = await Card.find().sort({_id:-1}).limit(1)
-    cardId.length == 0 ? card.id = 0 : card.id = cardId[0].id+1;
+    card.id = genRandonID(8)
 
     try {
         let error = card.validateSync();
 
         if (typeof error?.errors != 'undefined') {
-
             const errors = error?.errors
 
             for (err in errors) {
@@ -55,15 +55,15 @@ const addCard = async (req, res = response) => {
 
 const getCardsByUser = async (req, res = response) => {
 
-    const {email, cards} = req.body
+    const {uid, email, cards} = req.body
 
     try{
-        const usuario = await Usuario.findOne({ email });
+        const usuario = await Usuario.findOne({ uid });
 
         if (!usuario) {
             return res.status(400).json({
                 ok: false,
-                msg: 'no existe el usuario con ese mail'
+                msg: 'no existe el usuario con ese uid'
             })
         }
 
@@ -84,21 +84,21 @@ const getCardsByUser = async (req, res = response) => {
 }
 
 const followCardByUser = async(req, res = response) => {
-    const {email, cards} = req.body
+    const {uid, email, cards} = req.body
 
     try{
-        const usuario = await Usuario.findOne({ email });
+        const usuario = await Usuario.findOne({ uid });
 
         if (!usuario) {
             return res.status(400).json({
                 ok: false,
-                msg: 'no existe el usuario con ese mail'
+                msg: 'no existe el usuario con ese uid'
             })
         }
 
         let resp = validarJWTByUser(req, res, usuario)
         if(resp.code == 401){
-            throw new Error(resp.msg)
+            throw new Error(resp.msg) 
         }
     
 
@@ -119,10 +119,10 @@ const followCardByUser = async(req, res = response) => {
 }
 
 const unfollowCardByUser = async(req, res = response) => {
-    const {email, cards} = req.body
+    const {uid, email, cards} = req.body
 
     try{
-        const usuario = await Usuario.findOne({ email });
+        const usuario = await Usuario.findOne({ uid });
 
         if (!usuario) {
             return res.status(400).json({
@@ -157,4 +157,53 @@ const unfollowCardByUser = async(req, res = response) => {
     }
 }
 
-module.exports = { addCard, getCards, getCardsByUser, followCardByUser, unfollowCardByUser }
+const searchCard = async(req, res = response) => {
+    try{
+        const {params} = req.body
+        const {query} = req.params
+
+        let result = ""
+
+        switch(`${query}`){
+            case "titleCard":
+                result = await Card.find({"titleCard" : { $regex: params, $options: "i" } });
+                break; 
+            case "Distancia":
+                result = await Card.find({"info.Distancia" : { $regex: params, $options: "i" } });
+                break;
+            case "Desnivel":
+                result = await Card.find({"info.Desnivel" : { $regex: params, $options: "i" } });
+                break;
+            case "Fecha":
+                result = await Card.find({"info.Fecha" : { $regex: params, $options: "i" } });
+                break;
+            case "Poblacion":
+                result = await Card.find({"info.Poblacion" : { $regex: params, $options: "i" } });
+                break;
+            case "Provincia":
+                result = await Card.find({"info.Provincia" : { $regex: params, $options: "i" } });
+                break;
+            default:
+                result = await Card.find({$or : [
+                    {"titleCard" : { $regex: params, $options: "i" } },
+                    {"info.Distancia" : { $regex: params, $options: "i" } },
+                    {"info.Desnivel" : { $regex: params, $options: "i" } },
+                    {"info.Fecha" : { $regex: params, $options: "i" } },
+                    {"info.Poblacion" : { $regex: params, $options: "i" } },
+                    {"info.Provincia" : { $regex: params, $options: "i" } }
+                ]});
+                break;
+        }
+
+
+        res.status(200).json({
+            ok: true,
+            resp: result,
+            param: params
+        })
+    }catch(e){
+        logError(req, res, e, "searchCard")
+    }
+}
+
+module.exports = { addCard, getCards, getCardsByUser, followCardByUser, unfollowCardByUser, searchCard }

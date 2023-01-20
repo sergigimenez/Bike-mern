@@ -3,7 +3,7 @@ const { object } = require('prop-types')
 
 const CardSchema = Schema({
     id: {
-        type: Number,
+        type: String,
         required: true
     },
     img: {
@@ -16,25 +16,42 @@ const CardSchema = Schema({
     },
     info: {
         type: {
-            distancia: {
-                type: Number,
-                required: true
+            Distancia: {
+                type: Array
             },
-            desnivel: {
-                type: Number,
-                required: true
+            Desnivel: {
+                type: Array
             },
-            fecha: {
+            Fecha: {
                 type: String,
                 required: true
             },
-            precio: {
+            Fecha_fin: {
+                type: String
+            },
+            Fecha_confirmada: {
+                type: String
+            },
+            Poblacion: {
+                type: String,
+                required: true
+            },
+            Provincia: {
+                type: String,
+                required: true
+            },
+            Precio: {
                 type: Number,
                 required: true
             },
-            etapas: {
-                type: Number,
-                required: true
+            Etapas: {
+                type: Number //TODO AÑADIR ETAPAS EN EL FORMULARIO
+            },
+            Facebook: {
+                type: String
+            },
+            Web: {
+                type: String
             },
         },
         required: true

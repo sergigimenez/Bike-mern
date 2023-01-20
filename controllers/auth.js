@@ -74,6 +74,7 @@ const loginUsuario = async (req, res = response) => {
             ok: true,
             uid: usuario.id,
             name: usuario.name,
+            email: usuario.email,
             cards: usuario.cards,
             token
         })
@@ -90,6 +91,8 @@ const revalidarToken = async (req, res) => {
 
     const {uid, name} = req
 
+    const usuario = await Usuario.findOne({ uid });
+
     //generar JWT
     const token = await generarJWT(uid, name)
     //generar JWT
@@ -97,8 +100,10 @@ const revalidarToken = async (req, res) => {
     res.json({
         ok: true,
         uid, name,
-        msg: 'renews',
-        token
+        email: usuario.email,
+        cards: usuario.cards,
+        msg: 'renew',
+        token,
     })
 }
 
