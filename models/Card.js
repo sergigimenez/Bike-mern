@@ -23,11 +23,10 @@ const CardSchema = Schema({
                 type: Array
             },
             Fecha: {
-                type: String,
-                required: true
+                type: Date
             },
             Fecha_fin: {
-                type: String
+                type: Date
             },
             Fecha_confirmada: {
                 type: String
