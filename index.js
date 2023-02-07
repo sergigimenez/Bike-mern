@@ -1,3 +1,4 @@
+console.log("sergi app test")
 
 const express = require('express')
 require('dotenv').config()
