@@ -16,6 +16,9 @@ const UsuarioSchema = Schema({
     },
     cards: {
         type: Array
+    },
+    cardsLiked: {
+        type: Array
     }
 });
 

@@ -32,6 +32,7 @@ const crearUsuario = async (req, res = response) => {
             uid: usuario.id,
             name: usuario.name,
             cards: [],
+            cardsLiked: [],
             token
         })
     } catch (error) {
@@ -76,6 +77,7 @@ const loginUsuario = async (req, res = response) => {
             name: usuario.name,
             email: usuario.email,
             cards: usuario.cards,
+            cardsLiked: usuario.cardsLiked,
             token
         })
     } catch (error) {
@@ -102,6 +104,7 @@ const revalidarToken = async (req, res) => {
         uid, name,
         email: usuario.email,
         cards: usuario.cards,
+        cardsLiked: usuario.cardsLiked,
         msg: 'renew',
         token,
     })

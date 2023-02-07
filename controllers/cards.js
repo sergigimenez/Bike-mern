@@ -6,6 +6,7 @@ const { genRandonID } = require('../middlewares/utils')
 const Card = require('../models/Card');
 const Usuario = require('../models/Usuario');
 const Provincias = require('../models/Provincias');
+const Poblaciones = require('../models/Poblaciones');
 
 const getCards = async (req, res = response) => {
 
@@ -72,16 +73,12 @@ const getCardsByUser = async (req, res = response) => {
             })
         }
 
-        let resp = validarJWTByUser(req, res, usuario)
-        if (resp.code == 401) {
-            throw new Error(resp.msg)
-        }
-
         let usuarioCards = usuario.cards
 
         res.status(200).json({
             ok: true,
-            usuarioCards
+            usuarioCards: usuario.cards,
+            cardsLiked: usuario.cardsLiked
         })
     } catch (e) {
         logError(req, res, e, "getCardsByUser")
@@ -155,10 +152,62 @@ const unfollowCardByUser = async (req, res = response) => {
 
         res.status(200).json({
             ok: true,
-            userUpdated
+            userUpdated,
+            usuario
         })
     } catch (e) {
         logError(req, res, e, "unfollowCardByUser")
+    }
+}
+
+const likeCardByUser = async (req, res = response) => {
+    const { uid, cardId } = req.body
+
+    try {
+        const usuario = await Usuario.findOne({ uid });
+
+        if (!usuario) {
+            return res.status(400).json({
+                ok: false,
+                msg: 'no existe el usuario con ese mail'
+            })
+        }
+
+        const card = await Card.find({ id: cardId });
+
+        if (!card) {
+            return res.status(400).json({
+                ok: false,
+                msg: 'no existe esa ruta'
+            })
+        }
+
+        if (usuario.cardsLiked.includes(cardId)) {
+            let cardsLiked = usuario.cardsLiked.filter(c => c !== cardId)
+
+            await Usuario.findOneAndUpdate({ _id: uid, cardsLiked: cardsLiked })
+            const card = await Card.findOneAndUpdate({ id: cardId, $inc: { "stateComents.likes": -1 } })
+
+            res.status(200).json({
+                ok: true,
+                msg: "dislike",
+                totalLikes: card.stateComents.likes-1
+            })
+
+        } else {
+            let cardsLiked = [...new Set([cardId, ...usuario.cardsLiked])]
+
+            await Usuario.findOneAndUpdate({ _id: uid, cardsLiked: cardsLiked })
+            const card = await Card.findOneAndUpdate({ id: cardId, $inc: { "stateComents.likes": 1 } })
+
+            res.status(200).json({
+                ok: true,
+                msg: "like",
+                totalLikes: card.stateComents.likes+1
+            })
+        }
+    } catch (e) {
+        logError(req, res, e, "likeCardByUser")
     }
 }
 
@@ -236,6 +285,19 @@ const getProvincias = async (req, res = response) => {
     }
 }
 
+const getPoblaciones = async (req, res = response) => {
+    try {
+        result = await Poblaciones.find();
+
+        res.status(200).json({
+            ok: true,
+            resp: result
+        })
+    } catch (e) {
+        logError(req, res, e, "getPoblaciones")
+    }
+}
+
 const getTitleCard = async (req, res = response) => {
     try {
 
@@ -250,4 +312,4 @@ const getTitleCard = async (req, res = response) => {
     }
 }
 
-module.exports = { addCard, getCards, getCardsByUser, followCardByUser, unfollowCardByUser, searchCard, getProvincias, getTitleCard }
+module.exports = { addCard, getCards, getCardsByUser, followCardByUser, unfollowCardByUser, likeCardByUser, searchCard, getProvincias, getPoblaciones, getTitleCard }
