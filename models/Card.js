@@ -1,5 +1,4 @@
 const { Schema, model } = require('mongoose')
-const { object } = require('prop-types')
 
 const CardSchema = Schema({
     id: {
