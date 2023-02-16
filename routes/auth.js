@@ -7,7 +7,7 @@
     const { check } = require('express-validator')
     const router = Router();
     
-    const { crearUsuario, loginUsuario, revalidarToken, eliminarUsuario } = require('../controllers/auth');
+    const { crearUsuario, loginUsuario, revalidarToken, eliminarUsuario, loginUserWhithGoogle, loginUserWhithFacebook } = require('../controllers/auth');
     const { validarCampos } = require('../middlewares/validar-campos');
     const { validarJWT } = require('../middlewares/validar-jwt');
     
@@ -16,7 +16,9 @@
         [
             check('name', 'El nombre es obligatorio').not().isEmpty(),
             check('email', 'El email es obligatorio').isEmail(),
+            check('repeatEmail', 'El email es obligatorio').isEmail(),
             check('password', 'El password debe de ser de 6 caracteres').isLength({ min: 6 }),
+            check('repeatPassword', 'El password debe de ser de 6 caracteres').isLength({ min: 6 }),
             validarCampos
         ],
         crearUsuario
@@ -31,6 +33,9 @@
         ],
         loginUsuario
     )
+
+    router.post('/google', loginUserWhithGoogle)
+    router.post('/facebook', loginUserWhithFacebook)
     
     router.get('/renew', validarJWT, revalidarToken)
     

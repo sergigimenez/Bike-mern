@@ -1,6 +1,9 @@
 const { Schema, model } = require('mongoose');
 
 const UsuarioSchema = Schema({
+    uidFacebook: {
+        type: String
+    },
     name: {
         type: String,
         required: true

@@ -5,15 +5,22 @@ const usuarioModel = require('../models/Usuario')
 const { generarJWT } = require('../helpers/jwt')
 
 const crearUsuario = async (req, res = response) => {
-    const { email, password } = req.body
+    const { email, password, repeatEmail, repeatPassword } = req.body
 
     try {
+        if (email != repeatEmail || password != repeatPassword) {
+            return res.status(400).json({
+                ok: false,
+                msg: 'El email o la contraseña no coinciden'
+            })
+        }
+
         let usuario = await Usuario.findOne({ email });
 
         if (usuario) {
             return res.status(400).json({
                 ok: false,
-                msg: 'Un usuario ya existe con ese'
+                msg: 'Un usuario ya existe con ese email'
             })
         }
 
@@ -36,7 +43,6 @@ const crearUsuario = async (req, res = response) => {
             token
         })
     } catch (error) {
-        console.log(error)
         res.status(500).json({
             ok: false,
             msg: 'Por favor hable con el admin'
@@ -89,9 +95,113 @@ const loginUsuario = async (req, res = response) => {
     }
 }
 
+const loginUserWhithGoogle = async (req, res = response) => {
+    const { email, name, uid} = req.body
+
+    try {
+        const usuario = await Usuario.findOne({ email });
+
+        if (!usuario) {
+            newUsuario = new usuarioModel({ email, name, uid, password: "newPassRandom" })
+            //encriptar pass
+            const salt = bcrypt.genSaltSync()
+            newUsuario.password = bcrypt.hashSync(password, salt)
+            //encriptar pass
+
+            await newUsuario.save(); // save en BD
+
+            const token = await generarJWT(newUsuario.uid, newUsuario.name)
+
+            res.status(200).json({
+                ok: true,
+                uid: newUsuario.uid,
+                name: newUsuario.name,
+                cards: [],
+                cardsLiked: [],
+                token
+            })
+        } else {
+            //generar JWT
+            const token = await generarJWT(usuario.id, usuario.name)
+            //generar JWT
+
+            res.status(200).json({
+                ok: true,
+                uid: usuario.id,
+                name: usuario.name,
+                email: usuario.email,
+                cards: usuario.cards,
+                cardsLiked: usuario.cardsLiked,
+                token
+            })
+        }
+
+
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({
+            ok: false,
+            msg: 'Por favor hable con el admin'
+        })
+    }
+}
+
+const loginUserWhithFacebook = async (req, res = response) => {
+    const {name, uid, password = "newPassRandom" } = req.body
+
+    try {
+        const usuario = await Usuario.findOne({ uidFacebook: uid });
+
+        console.log(usuario)
+
+        if (!usuario) {
+            newUsuario = new usuarioModel({ email: "email@facebook.com", name, uidFacebook: uid, password: "newPassRandom" })
+            //encriptar pass
+            const salt = bcrypt.genSaltSync()
+            newUsuario.password = bcrypt.hashSync(password, salt)
+            //encriptar pass
+
+            await newUsuario.save(); // save en BD
+
+            const token = await generarJWT(newUsuario.uid, newUsuario.name)
+
+            res.status(200).json({
+                ok: true,
+                uid: newUsuario.uid,
+                name: newUsuario.name,
+                cards: [],
+                cardsLiked: [],
+                token
+            })
+        } else {
+            //generar JWT
+            const token = await generarJWT(usuario.id, usuario.name)
+            //generar JWT
+
+            res.status(200).json({
+                ok: true,
+                uid: usuario.id,
+                name: usuario.name,
+                email: usuario.email,
+                cards: usuario.cards,
+                cardsLiked: usuario.cardsLiked,
+                token
+            })
+        }
+
+
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({
+            ok: false,
+            msg: 'Por favor hable con el admin'
+        })
+    }
+}
+
 const revalidarToken = async (req, res) => {
 
-    const {uid, name} = req
+    const { uid, name } = req
 
     const usuario = await Usuario.findOne({ uid });
 
@@ -113,5 +223,7 @@ const revalidarToken = async (req, res) => {
 module.exports = {
     crearUsuario,
     loginUsuario,
+    loginUserWhithGoogle,
+    loginUserWhithFacebook,
     revalidarToken
 }

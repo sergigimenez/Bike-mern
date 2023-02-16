@@ -48,6 +48,15 @@ const CardSchema = Schema({
             Facebook: {
                 type: String
             },
+            Instagram: {
+                type: String
+            },
+            Twitter: {
+                type: String
+            },
+            Youtube: {
+                type: String
+            },
             Web: {
                 type: String
             },

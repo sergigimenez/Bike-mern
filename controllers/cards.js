@@ -59,12 +59,38 @@ const addCard = async (req, res = response) => {
     }
 }
 
+const updateImage = async (req, res = response) => {
+    try {
+        const { cardId, newImage } = req.body
+
+        const card = await Card.find({ id: cardId });
+
+        if (!card) {
+            return res.status(400).json({
+                ok: false,
+                msg: 'no existe esa ruta'
+            })
+        }
+
+        const updateCard = await Card.findOneAndUpdate({ id: cardId }, { img: newImage }, { new: true })
+
+        res.status(200).json({
+            ok: true,
+            msg: "upload",
+            cardId,
+            cardImg: updateCard.img
+        })
+    } catch (e) {
+        logError(req, res, e, "updateImage")
+    }
+}
+
 const getCardsByUser = async (req, res = response) => {
 
     const { uid, email, cards } = req.body
 
     try {
-        const usuario = await Usuario.findOne({ uid });
+        const usuario = await Usuario.findById(uid)
 
         if (!usuario) {
             return res.status(400).json({
@@ -72,8 +98,6 @@ const getCardsByUser = async (req, res = response) => {
                 msg: 'no existe el usuario con ese uid'
             })
         }
-
-        let usuarioCards = usuario.cards
 
         res.status(200).json({
             ok: true,
@@ -89,7 +113,7 @@ const followCardByUser = async (req, res = response) => {
     const { uid, email, cards } = req.body
 
     try {
-        const usuario = await Usuario.findOne({ uid });
+        const usuario = await Usuario.findById(uid)
 
         if (!usuario) {
             return res.status(400).json({
@@ -124,7 +148,7 @@ const unfollowCardByUser = async (req, res = response) => {
     const { uid, email, cards } = req.body
 
     try {
-        const usuario = await Usuario.findOne({ uid });
+        const usuario = await Usuario.findById(uid)
 
         if (!usuario) {
             return res.status(400).json({
@@ -164,7 +188,7 @@ const likeCardByUser = async (req, res = response) => {
     const { uid, cardId } = req.body
 
     try {
-        const usuario = await Usuario.findOne({ uid });
+        const usuario = await Usuario.findById(uid)
 
         if (!usuario) {
             return res.status(400).json({
@@ -186,28 +210,145 @@ const likeCardByUser = async (req, res = response) => {
             let cardsLiked = usuario.cardsLiked.filter(c => c !== cardId)
 
             await Usuario.findOneAndUpdate({ _id: uid, cardsLiked: cardsLiked })
-            const card = await Card.findOneAndUpdate({ id: cardId, $inc: { "stateComents.likes": -1 } })
+            const card = await Card.findOneAndUpdate({ id: cardId }, { $inc: { "stateComents.likes": -1 } }, { new: true })
 
             res.status(200).json({
                 ok: true,
                 msg: "dislike",
-                totalLikes: card.stateComents.likes-1
+                totalLikes: card.stateComents.likes
             })
 
         } else {
             let cardsLiked = [...new Set([cardId, ...usuario.cardsLiked])]
 
             await Usuario.findOneAndUpdate({ _id: uid, cardsLiked: cardsLiked })
-            const card = await Card.findOneAndUpdate({ id: cardId, $inc: { "stateComents.likes": 1 } })
+            const card = await Card.findOneAndUpdate({ id: cardId }, { $inc: { "stateComents.likes": 1 } }, { new: true })
 
             res.status(200).json({
                 ok: true,
                 msg: "like",
-                totalLikes: card.stateComents.likes+1
+                totalLikes: card.stateComents.likes
             })
         }
     } catch (e) {
         logError(req, res, e, "likeCardByUser")
+    }
+}
+
+const commentCardByUser = async (req, res = response) => {
+    const { uid, cardId, comment } = req.body
+    try {
+        const usuario = await Usuario.findById(uid)
+
+        if (!usuario) {
+            return res.status(400).json({
+                ok: false,
+                msg: 'no existe el usuario con ese mail'
+            })
+        }
+
+        const card = await Card.findOneAndUpdate({ id: cardId }, {
+            $push: {
+                comments: {
+                    "id": genRandonID(14),
+                    "userComent": comment.userComent,
+                    "textComent": comment.textComent,
+                    "dateComent": comment.dateComent
+                }
+            }
+        }, { new: true })
+
+        if (!card) {
+            return res.status(400).json({
+                ok: false,
+                msg: 'no existe esa ruta'
+            })
+        }
+
+        res.status(200).json({
+            ok: true,
+            msg: "addNewComment"
+        })
+
+    } catch (e) {
+        logError(req, res, e, "commentCardByUser")
+    }
+}
+
+const updateCommentCardByUser = async (req, res = response) => {
+    const { uid, comment } = req.body
+    try {
+        const usuario = await Usuario.findById(uid)
+
+        if (!usuario) {
+            return res.status(400).json({
+                ok: false,
+                msg: 'no existe el usuario con ese mail'
+            })
+        }
+
+        const commentUpdate = await Card.findOneAndUpdate(
+            { "comments.id": comment.id },
+            { "comments.$.textComent": comment.textComent },
+            { new: true }
+        );
+
+        if (!commentUpdate) {
+            return res.status(400).json({
+                ok: false,
+                id: comment.id,
+                msg: 'no existe ese comentario'
+            })
+        }
+
+        res.status(200).json({
+            ok: true,
+            commentUpdate,
+            msg: "addNewComment"
+        })
+
+    } catch (e) {
+        logError(req, res, e, "commentCardByUser")
+    }
+}
+
+const deleteCommentCardByUser = async (req, res = response) => {
+    const { uid, comment } = req.body
+    try {
+        const usuario = await Usuario.findById(uid)
+
+        if (!usuario) {
+            return res.status(400).json({
+                ok: false,
+                msg: 'no existe el usuario con ese mail'
+            })
+        }
+
+        const commentUpdate = await Card.findOneAndUpdate(
+            { "comments.id": comment.id },
+            {
+                $pull: { comments: { "id": comment.id } }
+            },
+            { new: true }
+        ).then((obj, err) => {
+            if (!!err) {
+                throw new Error("error : " + err)
+            }
+
+            if (obj == null) {
+                return res.status(400).json({
+                    ok: true,
+                    msg: 'no existe ese comentario'
+                })
+            } else {
+                res.status(200).json({
+                    ok: true,
+                    msg: "deleteComment"
+                })
+            }
+        })
+    } catch (e) {
+        logError(req, res, e, "deleteCommentCardByUser")
     }
 }
 
@@ -312,4 +453,51 @@ const getTitleCard = async (req, res = response) => {
     }
 }
 
-module.exports = { addCard, getCards, getCardsByUser, followCardByUser, unfollowCardByUser, likeCardByUser, searchCard, getProvincias, getPoblaciones, getTitleCard }
+const cardUpdateRSS = async (req, res = response) => {
+    const { uid, web } = req.body
+    try {
+        const usuario = await Usuario.findById(uid)
+
+        if (!usuario) {
+            return res.status(400).json({
+                ok: false,
+                msg: 'no existe el usuario con ese mail'
+            })
+        }
+
+        const rssUpdated = await Card.findOneAndUpdate(
+            { "info.Web": web.url },
+            {
+                "info.Facebook": web.facebook,
+                "info.Instagram": web.instagram,
+                "info.Twitter": web.twitter,
+                "info.Youtube": web.youtube
+            },
+            { new: true }
+        );
+
+        if (!rssUpdated) {
+            return res.status(400).json({
+                ok: false,
+                id: comment.id,
+                msg: 'esta carrera no tiene web o no existe'
+            })
+        }
+
+        res.status(200).json({
+            ok: true,
+            rssUpdated,
+            msg: "updateRSS"
+        })
+
+    } catch (e) {
+        logError(req, res, e, "updateRSS")
+    }
+}
+
+module.exports = {
+    addCard, updateImage, getCards, getCardsByUser, followCardByUser,
+    unfollowCardByUser, likeCardByUser, commentCardByUser, searchCard,
+    getProvincias, getPoblaciones, getTitleCard, updateCommentCardByUser,
+    deleteCommentCardByUser, cardUpdateRSS
+}
