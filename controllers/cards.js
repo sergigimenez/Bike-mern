@@ -87,7 +87,7 @@ const updateImage = async (req, res = response) => {
 
 const getCardsByUser = async (req, res = response) => {
 
-    const { uid, email, cards } = req.body
+    const { uid } = req.body
 
     try {
         const usuario = await Usuario.findById(uid)
@@ -109,6 +109,7 @@ const getCardsByUser = async (req, res = response) => {
     }
 }
 
+/*3 peticiones a la BD */
 const followCardByUser = async (req, res = response) => {
     const { uid, email, cards } = req.body
 
@@ -121,12 +122,6 @@ const followCardByUser = async (req, res = response) => {
                 msg: 'no existe el usuario con ese uid'
             })
         }
-
-        let resp = validarJWTByUser(req, res, usuario)
-        if (resp.code == 401) {
-            throw new Error(resp.msg)
-        }
-
 
         let cardExist = await (await Card.find({ id: { $in: cards } })).map(e => e.id)
 
@@ -144,6 +139,7 @@ const followCardByUser = async (req, res = response) => {
     }
 }
 
+/*3 peticiones a la BD */
 const unfollowCardByUser = async (req, res = response) => {
     const { uid, email, cards } = req.body
 
@@ -155,11 +151,6 @@ const unfollowCardByUser = async (req, res = response) => {
                 ok: false,
                 msg: 'no existe el usuario con ese mail'
             })
-        }
-
-        let resp = validarJWTByUser(req, res, usuario)
-        if (resp.code == 401) {
-            throw new Error(resp.msg)
         }
 
         let usuarioCards = usuario.cards
@@ -184,6 +175,7 @@ const unfollowCardByUser = async (req, res = response) => {
     }
 }
 
+/*4 peticiones a la BD */
 const likeCardByUser = async (req, res = response) => {
     const { uid, cardId } = req.body
 
@@ -247,16 +239,24 @@ const commentCardByUser = async (req, res = response) => {
             })
         }
 
-        const card = await Card.findOneAndUpdate({ id: cardId }, {
-            $push: {
-                comments: {
-                    "id": genRandonID(14),
-                    "userComent": comment.userComent,
-                    "textComent": comment.textComent,
-                    "dateComent": comment.dateComent
+        const genRandomIdComment = genRandonID(14)
+
+        const card = await Card.findOneAndUpdate({ id: cardId },
+            {
+                $inc: {
+                    "stateComents.comentarios": 1
+                },
+                $push: {
+                    comments: {
+                        "id": genRandomIdComment,
+                        "uid": uid,
+                        "userComent": comment.userComent,
+                        "textComent": comment.textComent,
+                        "dateComent": comment.dateComent
+                    }
                 }
-            }
-        }, { new: true })
+            },
+            { new: true })
 
         if (!card) {
             return res.status(400).json({
@@ -267,6 +267,14 @@ const commentCardByUser = async (req, res = response) => {
 
         res.status(200).json({
             ok: true,
+            "comentario": {
+                "id": genRandomIdComment,
+                "uid": uid,
+                "userComent": usuario.name,
+                "textComent": comment.textComent,
+                "dateComent": comment.dateComent
+            },
+            "totalComentario": card.stateComents.comentarios,
             msg: "addNewComment"
         })
 
@@ -327,6 +335,9 @@ const deleteCommentCardByUser = async (req, res = response) => {
         const commentUpdate = await Card.findOneAndUpdate(
             { "comments.id": comment.id },
             {
+                $inc: {
+                    "stateComents.comentarios": -1
+                },
                 $pull: { comments: { "id": comment.id } }
             },
             { new: true }
@@ -343,6 +354,9 @@ const deleteCommentCardByUser = async (req, res = response) => {
             } else {
                 res.status(200).json({
                     ok: true,
+                    uid,
+                    "commentarioID": comment.id,
+                    totalComentario: obj.stateComents.comentarios,
                     msg: "deleteComment"
                 })
             }

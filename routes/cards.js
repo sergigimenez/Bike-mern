@@ -16,7 +16,7 @@ router.use(validarJWT)
 router.post('/', addCard)
 router.get('/num/:num', getCards)
 
-router.get('/user', getCardsByUser)
+router.post('/user', getCardsByUser)
 
 router.post('/uploadImage', updateImage)
 router.post('/follow', followCardByUser)

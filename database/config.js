@@ -6,7 +6,8 @@ const dbConnection = async () => {
         mongoose.set('strictQuery', true);
         await mongoose.connect( process.env.DB_CNN , {
             useNewUrlParser: true, 
-            useUnifiedTopology: true
+            useUnifiedTopology: true,
+            maxIdleTimeMS: 500000
             //useCreateIndex: true
         });
         
