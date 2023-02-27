@@ -203,7 +203,7 @@ const revalidarToken = async (req, res) => {
 
     const { uid, name } = req
 
-    const usuario = await Usuario.findOne({ uid });
+    const usuario = await Usuario.findById(uid)
 
     //generar JWT
     const token = await generarJWT(uid, name)

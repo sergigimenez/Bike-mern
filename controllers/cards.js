@@ -123,16 +123,26 @@ const followCardByUser = async (req, res = response) => {
             })
         }
 
-        let cardExist = await (await Card.find({ id: { $in: cards } })).map(e => e.id)
 
-        let newCards = cards.concat(usuario.cards)
-        newCards = [...new Set([...cardExist, ...usuario.cards])]
+        //let cardExist = await (await Card.find({ id: { $in: cards } })).map(e => e.id)
 
-        const userUpdated = await Usuario.findByIdAndUpdate(usuario._id, { cards: newCards }, { new: true })
+        let cardExist = await (await Card.find({ id: { $in: cards } })).map(e => {return {"id": e.id, "title": e.titleCard, "date": e.info.Fecha}})
 
-        res.status(200).json({
+        if(!!!usuario.cards.find(uc => {return uc.id == cardExist[0]?.id})){
+            let newCards = cards.concat(usuario.cards)
+            newCards = [...new Set([...cardExist, ...usuario.cards])]
+    
+            const userUpdated = await Usuario.findByIdAndUpdate(usuario._id, { cards: newCards }, { new: true })
+    
+            return res.status(200).json({
+                ok: true,
+                userUpdated
+            })
+        }
+
+        return res.status(200).json({
             ok: true,
-            userUpdated
+            msg: "el usuario ya seguia esta carrera"
         })
     } catch (e) {
         logError(req, res, e, "followCardByUser")
@@ -158,7 +168,8 @@ const unfollowCardByUser = async (req, res = response) => {
         await (await Card.find({ id: { $in: cards } }))
             .map(e => e.id)
             .forEach(e => {
-                usuarioCards = usuarioCards.filter(e1 => e1 !== e)
+                usuarioCards = usuarioCards.filter(e1 => e1.id !== e)
+                //usuarioCards = usuarioCards.filter(e1 => e1 !== e)
             })
 
         newCards = [...new Set(usuarioCards)];
@@ -167,8 +178,7 @@ const unfollowCardByUser = async (req, res = response) => {
 
         res.status(200).json({
             ok: true,
-            userUpdated,
-            usuario
+            userUpdated
         })
     } catch (e) {
         logError(req, res, e, "unfollowCardByUser")
@@ -419,6 +429,7 @@ const searchCard = async (req, res = response) => {
 
         res.status(200).json({
             ok: true,
+            query,
             resp: result,
             totalResults
         })
