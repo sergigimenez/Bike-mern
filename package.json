@@ -1,5 +1,5 @@
 {
-  "name": "Bike-mern",
+  "name": "bike-mern",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -11,13 +11,25 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@google-cloud/storage": "^7.7.0",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
     "express-validator": "^6.14.2",
-    "jsonwebtoken": "^8.5.1",
+    "google-cloud-node": "^0.0.1-security",
+    "jsonwebtoken": "^9.0.2",
     "mongoose": "^6.6.7",
-    "mongoose-auto-increment": "^5.0.1"
-  }
+    "mongoose-auto-increment": "^5.0.1",
+    "node-pre-gyp": "^0.17.0",
+    "openai": "^4.19.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sergigimenez/Bike-mern.git"
+  },
+  "bugs": {
+    "url": "https://github.com/sergigimenez/Bike-mern/issues"
+  },
+  "homepage": "https://github.com/sergigimenez/Bike-mern#readme"
 }
