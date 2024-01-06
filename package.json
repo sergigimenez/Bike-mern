@@ -7,9 +7,6 @@
     "dev": "nodemon index.js",
     "start": "node index.js"
   },
-  "engines": {
-    "node": "20.x"
-  },
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -22,7 +19,7 @@
     "express-validator": "^6.14.2",
     "google-cloud-node": "^0.0.1-security",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^5.0.1",
+    "mongoose": "^5.13.22",
     "mongoose-auto-increment": "^5.0.1",
     "node-pre-gyp": "^0.17.0",
     "openai": "^4.19.0"
